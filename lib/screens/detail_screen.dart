@@ -18,7 +18,14 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void initState() {
     super.initState();
-    _futurePakaian = ApiService.fetchDetail(widget.pakaianId);
+    _loadPakaianData();
+  }
+
+  // Metode untuk memuat ulang data
+  void _loadPakaianData() {
+    setState(() {
+      _futurePakaian = ApiService.fetchDetail(widget.pakaianId);
+    });
   }
 
   @override
@@ -46,10 +53,15 @@ class _DetailScreenState extends State<DetailScreen> {
                   _buildDetailItem("Sold", pakaian.sold.toString()),
                   _buildDetailItem("Rating", "${pakaian.rating} ⭐"),
                   _buildDetailItem("Stock", pakaian.stock.toString()),
-                  _buildDetailItem("Year Released", pakaian.yearReleased.toString()),
+                  _buildDetailItem(
+                    "Year Released",
+                    pakaian.yearReleased.toString(),
+                  ),
                   _buildDetailItem(
                     "Material",
-                    pakaian.material.isEmpty ? "Tidak tersedia" : pakaian.material,
+                    pakaian.material.isEmpty
+                        ? "Tidak tersedia"
+                        : pakaian.material,
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -62,7 +74,9 @@ class _DetailScreenState extends State<DetailScreen> {
                             MaterialPageRoute(
                               builder: (_) => EditScreen(pakaian: pakaian),
                             ),
-                          );
+                          ).then(
+                            (_) => _loadPakaianData(),
+                          ); // Refresh data setelah kembali dari EditScreen
                         },
                         icon: const Icon(Icons.edit),
                         label: const Text("Edit"),
@@ -88,9 +102,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             );
           } else if (snapshot.hasError) {
-            return Center(
-              child: Text("Error: ${snapshot.error}"),
-            );
+            return Center(child: Text("Error: ${snapshot.error}"));
           }
           return const Center(child: CircularProgressIndicator());
         },
