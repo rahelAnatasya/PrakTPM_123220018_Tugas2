@@ -1,5 +1,5 @@
 class Pakaian {
-  final String id;
+  final int id;
   final String name;
   final int price;
   final String category;
@@ -9,6 +9,7 @@ class Pakaian {
   final int stock;
   final int yearReleased;
   final String material;
+
   Pakaian({
     required this.id,
     required this.name,
@@ -23,22 +24,37 @@ class Pakaian {
   });
 
   factory Pakaian.fromJson(Map<String, dynamic> json) {
+    // Debug untuk melihat data mentah dari API
+    print("Raw JSON data: $json");
+
+    // Handle kasus di mana kita menerima respons API lengkap atau hanya bagian data
+    Map<String, dynamic> data = json;
+    if (json.containsKey('data')) {
+      data = json['data'];
+    }
+
+    print("Material from API: ${data['material']}");
+
     return Pakaian(
-      id: json['id'].toString(),
-      name: json['name'].toString(),
-      price: int.parse(json['price'].toString()),
-      category: json['category'].toString(),
-      brand: json['brand'].toString(),
-      sold: int.parse(json['sold'].toString()),
-      rating: (json['rating'] as num).toDouble(),
-      stock: int.parse(json['stock'].toString()),
-      yearReleased: int.parse(json['yearReleased'].toString()),
-      material: json['material'].toString(),
+      id: data['id'],
+      name: data['name'],
+      price: data['price'],
+      category: data['category'],
+      brand: data['brand'] ?? '',
+      sold: data['sold'] ?? 0,
+      rating:
+          (data['rating'] is int)
+              ? (data['rating'] as int).toDouble()
+              : (data['rating'] ?? 0.0),
+      stock: data['stock'] ?? 0,
+      yearReleased: data['yearReleased'] ?? 0,
+      material: data['material'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'price': price,
       'category': category,

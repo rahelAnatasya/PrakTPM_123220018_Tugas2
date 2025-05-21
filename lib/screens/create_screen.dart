@@ -14,6 +14,7 @@ class _CreateScreenState extends State<CreateScreen> {
   String name = '', category = '', brand = '', material = '';
   int price = 0, sold = 0, stock = 0, yearReleased = DateTime.now().year;
   double rating = 0.0;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +59,10 @@ class _CreateScreenState extends State<CreateScreen> {
                   keyboardType: TextInputType.number,
                   validator: (v) {
                     if (v?.isEmpty == true) return 'Required';
-                    final ratingVal = double.tryParse(v!) ?? 0;
-                    if (ratingVal < 0 || ratingVal > 5) {
-                      return 'Rating must be between 0 and 5';
-                    }
+                    final value = double.tryParse(v!);
+                    if (value == null) return 'Must be a number';
+                    if (value < 0 || value > 5)
+                      return 'Must be between 0 and 5';
                     return null;
                   },
                   onChanged: (val) => rating = double.tryParse(val) ?? 0.0,
@@ -73,15 +74,16 @@ class _CreateScreenState extends State<CreateScreen> {
                   onChanged: (val) => stock = int.tryParse(val) ?? 0,
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Year Released (2018-2025)',
+                  decoration: InputDecoration(
+                    labelText: 'Year Released (2018-${DateTime.now().year})',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (v) {
                     if (v?.isEmpty == true) return 'Required';
-                    final year = int.tryParse(v!) ?? 0;
-                    if (year < 2018 || year > 2025) {
-                      return 'Year must be between 2018 and 2025';
+                    final value = int.tryParse(v!);
+                    if (value == null) return 'Must be a number';
+                    if (value < 2018 || value > DateTime.now().year) {
+                      return 'Must be between 2018 and ${DateTime.now().year}';
                     }
                     return null;
                   },
@@ -96,48 +98,66 @@ class _CreateScreenState extends State<CreateScreen> {
                   onChanged: (val) => material = val,
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState?.validate() == true) {
-                      // Store the context before async gap
-                      final currentContext = context;
-                      try {
-                        await ApiService.createPakaian(
-                          Pakaian(
-                            id: '', // Backend will generate ID
-                            name: name,
-                            price: price,
-                            category: category,
-                            brand: brand,
-                            sold: sold,
-                            rating: rating,
-                            stock: stock,
-                            yearReleased: yearReleased,
-                            material: material,
-                          ),
-                        );
-
-                        // Check if the widget is still in the tree after the async gap
-                        if (mounted) {
-                          Navigator.pop(currentContext);
-                        }
-                      } catch (e) {
-                        // Check if the widget is still mounted before showing error
-                        if (!mounted) return;
-
-                        ScaffoldMessenger.of(
-                          currentContext,
-                        ).showSnackBar(SnackBar(content: Text(e.toString())));
-                      }
-                    }
-                  },
-                  child: const Text('Simpan'),
-                ),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                      onPressed: _submitForm,
+                      child: const Text('Simpan'),
+                    ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState?.validate() == true) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Store the context before async gap
+      final currentContext = context;
+      try {
+        // Note: Passing 0 as ID since the backend will generate it
+        await ApiService.createPakaian(
+          Pakaian(
+            id: 0, // Backend will generate ID
+            name: name,
+            price: price,
+            category: category,
+            brand: brand,
+            sold: sold,
+            rating: rating,
+            stock: stock,
+            yearReleased: yearReleased,
+            material: material,
+          ),
+        );
+
+        // Check if the widget is still in the tree after the async gap
+        if (mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            const SnackBar(content: Text('Pakaian berhasil ditambahkan')),
+          );
+          Navigator.pop(currentContext);
+        }
+      } catch (e) {
+        // Check if the widget is still mounted before showing error
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          currentContext,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 }

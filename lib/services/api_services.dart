@@ -23,11 +23,12 @@ class ApiService {
         throw Exception('Failed to load data: ${res.statusCode}');
       }
     } catch (e) {
+      print('Error fetching data: $e');
       throw Exception('Network error: $e');
     }
   }
 
-  static Future<Pakaian> fetchDetail(String id) async {
+  static Future<Pakaian> fetchDetail(int id) async {
     try {
       final res = await http.get(Uri.parse('$baseUrl/$id'));
       if (res.statusCode == 200) {
@@ -43,6 +44,7 @@ class ApiService {
         throw Exception('Failed to load detail: ${res.statusCode}');
       }
     } catch (e) {
+      print('Error fetching detail: $e');
       throw Exception('Network error: $e');
     }
   }
@@ -70,7 +72,7 @@ class ApiService {
     }
   }
 
-  static Future<void> updatePakaian(String id, Pakaian pakaian) async {
+  static Future<void> updatePakaian(int id, Pakaian pakaian) async {
     try {
       final res = await http.put(
         Uri.parse('$baseUrl/$id'),
@@ -91,11 +93,12 @@ class ApiService {
         throw Exception('Failed to update: ${res.statusCode}');
       }
     } catch (e) {
+      print('Error updating: $e');
       throw Exception('Network error: $e');
     }
   }
 
-  static Future<void> deletePakaian(String id) async {
+  static Future<void> deletePakaian(int id) async {
     try {
       final res = await http.delete(Uri.parse('$baseUrl/$id'));
       if (res.statusCode == 200) {
